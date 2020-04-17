@@ -2,11 +2,8 @@ use std::error::Error;
 use std::fs;
 
 pub fn run(config:Config) -> Result<(), Box<dyn Error>> {
-    println!("Searching for {}", config.query);
-    println!("Searching in {}", config.filename);
 
     let content = fs::read_to_string(config.filename)?;
-    println!("{}", content);
 
     Ok(())
 }
@@ -25,5 +22,29 @@ impl Config {
         let filename = args[2].clone();
 
         Ok(Config { query, filename })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::Config;
+    use super::*;
+
+    #[test]
+    fn instantiate_config_1_value_errors() {
+        let args = vec!(String::from("Howdy"));
+        if let Err(e) = Config::new(&args) {
+            assert_eq!(e, "not enough arguments");
+        }
+    }
+
+    #[test]
+    fn one_result() {
+        let query = "duct";
+        let content = "\
+        Rust:
+        safe, fast, productive
+        Pick three.";
+        assert_eq!(vec!["safe, fast, productive"], search(query, content));
     }
 }
