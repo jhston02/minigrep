@@ -5,6 +5,10 @@ pub fn run(config:Config) -> Result<(), Box<dyn Error>> {
 
     let content = fs::read_to_string(config.filename)?;
 
+    for line in search(&config.query, &content) {
+        println!("{}\r\n", line);
+    }
+
     Ok(())
 }
 
@@ -25,6 +29,27 @@ impl Config {
     }
 }
 
+fn search<'a>(query:&str, content:&'a str) -> Vec<&'a str> {
+    let mut matches:Vec<&str> = Vec::new();
+    for line in content.lines() {
+        if line.contains(query) {
+            matches.push((line));
+        }
+    }
+    matches
+}
+
+fn search_case_insensitive<'a>(query:&str, content:&'a str) -> Vec<&'a str> {
+    let query = query.to_lowercase();
+    let mut matches:Vec<&str> = Vec::new();
+    for line in content.lines() {
+        if line.to_lowercase().contains(&query) {
+            matches.push((&line));
+        }
+    }
+    matches
+}
+
 #[cfg(test)]
 mod tests {
     use crate::Config;
@@ -39,12 +64,22 @@ mod tests {
     }
 
     #[test]
-    fn one_result() {
+    fn case_sensitive() {
         let query = "duct";
         let content = "\
-        Rust:
-        safe, fast, productive
-        Pick three.";
+Rust:
+safe, fast, productive
+Pick three.";
         assert_eq!(vec!["safe, fast, productive"], search(query, content));
+    }
+
+    #[test]
+    fn case_insensitive() {
+        let query = "DUCT";
+        let content = "\
+Rust:
+safe, fast, productive
+Pick three.";
+        assert_eq!(vec!["safe, fast, productive"], search_case_insensitive(query, content));
     }
 }
