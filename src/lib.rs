@@ -1,15 +1,13 @@
+use std::env;
 use std::error::Error;
 use std::fs;
-use std::env;
 
-pub fn run(config:Config) -> Result<(), Box<dyn Error>> {
-
+pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let content = fs::read_to_string(config.filename)?;
 
     let results = if config.case_sensitive {
         search(&config.query, &content)
-    }
-    else {
+    } else {
         search_case_insensitive(&config.query, &content)
     };
 
@@ -23,7 +21,7 @@ pub fn run(config:Config) -> Result<(), Box<dyn Error>> {
 pub struct Config {
     pub query: String,
     pub filename: String,
-    pub case_sensitive: bool
+    pub case_sensitive: bool,
 }
 
 impl Config {
@@ -31,32 +29,42 @@ impl Config {
         args.next();
         let query = match args.next() {
             Some(arg) => arg,
-            None => return Err("Didn't get a query string")
+            None => return Err("Didn't get a query string"),
         };
 
         let filename = match args.next() {
             Some(arg) => arg,
-            None => return Err("Didn't get a filename string")
+            None => return Err("Didn't get a filename string"),
         };
 
         let case_sensitive = env::var("CASE_INSENSITIVE").is_err();
-        Ok(Config { query, filename, case_sensitive })
+        Ok(Config {
+            query,
+            filename,
+            case_sensitive,
+        })
     }
 }
 
-fn search<'a>(query:&str, content:&'a str) -> Vec<&'a str> {
-    content.lines().filter(|line| line.contains(query)).collect()
+fn search<'a>(query: &str, content: &'a str) -> Vec<&'a str> {
+    content
+        .lines()
+        .filter(|line| line.contains(query))
+        .collect()
 }
 
-fn search_case_insensitive<'a>(query:&str, content:&'a str) -> Vec<&'a str> {
+fn search_case_insensitive<'a>(query: &str, content: &'a str) -> Vec<&'a str> {
     let query = query.to_lowercase();
-    content.lines().filter(|line| line.to_lowercase().contains(&query)).collect()
+    content
+        .lines()
+        .filter(|line| line.to_lowercase().contains(&query))
+        .collect()
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::Config;
     use super::*;
+    use crate::Config;
 
     #[test]
     fn case_sensitive() {
@@ -75,6 +83,9 @@ Pick three.";
 Rust:
 safe, fast, productive
 Pick three.";
-        assert_eq!(vec!["safe, fast, productive"], search_case_insensitive(query, content));
+        assert_eq!(
+            vec!["safe, fast, productive"],
+            search_case_insensitive(query, content)
+        );
     }
 }
